@@ -18,9 +18,14 @@ fn main() {
     let cli = Cli::parse();
 
     if cli.run_all {
-        for (day, solution) in registry.solutions.iter() {
+        let mut first_run = true;
+        for (&day, solution) in registry.solutions.iter() {
+            if !first_run {
+                print!("\n");
+            }
             let input = fs::read_to_string(format!("input/day_{:02}", day)).unwrap();
-            solution.run_parts(&input);
+            solution.run_parts(&input, day);
+            first_run = false;
         }
     } else {
         let Some(day) = cli.day else {
@@ -34,7 +39,7 @@ fn main() {
 
         if let Some(solution) = registry.get(day) {
             let input = fs::read_to_string(format!("input/day_{:02}", day)).unwrap();
-            solution.run_parts(&input);
+            solution.run_parts(&input, day);
         } else {
             Cli::command().error(ErrorKind::InvalidValue, "Day {} not registered");
         }

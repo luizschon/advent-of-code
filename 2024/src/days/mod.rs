@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::ops::Deref;
+use std::time::Instant;
+
+use colored::Colorize;
 
 type SolutionFn = fn(&str) -> Box<dyn Display>;
 
@@ -15,9 +18,32 @@ impl DaySolution {
         Self { part_1, part_2 }
     }
 
-    pub fn run_parts(&self, input: &str) {
-        println!("{}", (self.part_1)(input));
-        println!("{}", (self.part_2)(input));
+    pub fn run_parts(&self, input: &str, day: u32) {
+        println!(
+            "{} {}",
+            "─┬─".cyan(),
+            format!("{} {:02} {}", "Running day".blue(), day, "solution:".blue()).italic()
+        );
+
+        let time = Instant::now();
+        println!(
+            "{} {} {}. {} {:?}",
+            " ├─".cyan(),
+            "Answer:".green(),
+            (self.part_1)(input),
+            "Elapsed time:".yellow(),
+            time.elapsed()
+        );
+
+        let time = Instant::now();
+        println!(
+            "{} {} {}. {} {:?}",
+            " └─".cyan(),
+            "Answer:".green(),
+            (self.part_2)(input),
+            "Elapsed time:".yellow(),
+            time.elapsed()
+        );
     }
 }
 
