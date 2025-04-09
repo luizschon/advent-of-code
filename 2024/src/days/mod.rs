@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::Display;
 use std::ops::Deref;
 use std::time::Instant;
@@ -48,13 +48,13 @@ impl DaySolution {
 }
 
 pub struct DaysRegistry {
-    pub solutions: HashMap<u32, Box<DaySolution>>,
+    pub solutions: BTreeMap<u32, Box<DaySolution>>,
 }
 
 impl DaysRegistry {
     pub fn new() -> Self {
         Self {
-            solutions: HashMap::new(),
+            solutions: BTreeMap::new(),
         }
     }
 
