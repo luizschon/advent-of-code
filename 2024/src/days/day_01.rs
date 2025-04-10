@@ -40,7 +40,7 @@ pub fn part_2(input: &str) -> Box<dyn Display> {
 fn parse(input: &str) -> (Vec<u64>, Vec<u64>) {
     let (mut first, mut second) = (vec![], vec![]);
 
-    for line in input.lines() {
+    for line in input.lines().map(str::trim) {
         if line.is_empty() {
             continue;
         }
@@ -49,4 +49,31 @@ fn parse(input: &str) -> (Vec<u64>, Vec<u64>) {
         second.push(nums.next().unwrap());
     }
     (first, second)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use indoc::indoc;
+
+    const TEST_INPUT: &str = indoc! {
+    "3   4
+     4   3
+     2   5
+     1   3
+     3   9
+     3   3"
+    };
+
+    #[test]
+    fn test_part_1() {
+        let res = part_1(TEST_INPUT);
+        assert_eq!(&res.to_string(), "11");
+    }
+
+    #[test]
+    fn test_part_2() {
+        let res = part_2(TEST_INPUT);
+        assert_eq!(&res.to_string(), "31");
+    }
 }

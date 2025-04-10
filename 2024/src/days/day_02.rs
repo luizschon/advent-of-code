@@ -26,7 +26,7 @@ fn is_safe_damped(report: &[u64]) -> bool {
 }
 
 pub fn part_1(input: &str) -> Box<dyn Display> {
-    let reports = parse(input);
+    let reports = dbg!(parse(input));
 
     Box::new(
         reports
@@ -37,7 +37,7 @@ pub fn part_1(input: &str) -> Box<dyn Display> {
 }
 
 pub fn part_2(input: &str) -> Box<dyn Display> {
-    let reports = parse(input);
+    let reports = dbg!(parse(input));
 
     Box::new(
         reports
@@ -56,4 +56,31 @@ fn parse(input: &str) -> Vec<Vec<u64>> {
                 .collect()
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use indoc::indoc;
+
+    const TEST_INPUT: &str = indoc! {
+    "7 6 4 2 1
+     1 2 7 8 9
+     9 7 6 2 1
+     1 3 2 4 5
+     8 6 4 4 1
+     1 3 6 7 9"
+    };
+
+    #[test]
+    fn test_part_1() {
+        let res = part_1(TEST_INPUT);
+        assert_eq!(&res.to_string(), "2");
+    }
+
+    #[test]
+    fn test_part_2() {
+        let res = part_2(TEST_INPUT);
+        assert_eq!(&res.to_string(), "4");
+    }
 }
