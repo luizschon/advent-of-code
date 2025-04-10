@@ -61,10 +61,6 @@ macro_rules! register_days {
     }
 }
 
-macro_rules! export_days {
-    () => {
-        include!(concat!(env!("OUT_DIR"), "/exported_days.rs"));
-    };
-}
-
-export_days!();
+// The generated code exports every day_XX module and creates the DAY_SOLUTIONS
+// static map.
+include!("_generated_.rs");

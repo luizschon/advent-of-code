@@ -1,14 +1,14 @@
-use std::{env, fs, path::Path};
+use std::{fs, path::Path};
 
 use indoc::indoc;
 
 fn main() {
-    let out_dir = env::var_os("OUT_DIR").unwrap();
-    let dest_path = Path::new(&out_dir).join("exported_days.rs");
+    let dest_path = Path::new("src/days/").join("_generated_.rs");
 
     let mut mod_code = indoc! { "
+        // DO NOT MODIFY!
+        //
         // Auto-generated module exports
-        // DO NOT MODIFY
     " }
     .to_owned();
 
@@ -29,19 +29,15 @@ fn main() {
             day_numbers.push(day_num.to_owned());
             mod_code.push_str(&format!(
                 indoc! {r#"
-                    pub mod day_{0} {{
-                        include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/days/day_{0}.rs"));
-                    }}
-
-                    "#
-                },
+                    #[path = "day_{0}.rs"]
+                    pub mod day_{0};
+                "# },
                 day_num
             ));
         }
     }
 
-    //
-    mod_code.push_str("// Generate static day solution map\n");
+    mod_code.push_str("\n// Generate static day solution map\n");
     mod_code.push_str(&format!("register_days![{}];\n", day_numbers.join(", ")));
 
     fs::write(&dest_path, mod_code).unwrap();
