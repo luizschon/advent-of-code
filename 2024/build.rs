@@ -32,6 +32,7 @@ fn main() {
                     pub mod day_{0} {{
                         include!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/days/day_{0}.rs"));
                     }}
+
                     "#
                 },
                 day_num
@@ -40,8 +41,8 @@ fn main() {
     }
 
     //
-    mod_code.push_str("\n// Generate static day solution map\n");
-    mod_code.push_str(&format!("register_days![{}];", day_numbers.join(", ")));
+    mod_code.push_str("// Generate static day solution map\n");
+    mod_code.push_str(&format!("register_days![{}];\n", day_numbers.join(", ")));
 
     fs::write(&dest_path, mod_code).unwrap();
     println!("cargo:rerun-if-changed=src/days");
