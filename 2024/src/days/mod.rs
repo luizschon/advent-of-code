@@ -1,9 +1,10 @@
 use std::collections::BTreeMap;
 use std::fmt::Display;
-use std::ops::Deref;
 use std::time::Instant;
 
 use colored::Colorize;
+use lazy_static::lazy_static;
+use paste::paste;
 
 type SolutionFn = fn(&str) -> Box<dyn Display>;
 
@@ -47,52 +48,26 @@ impl DaySolution {
     }
 }
 
-pub struct DaysRegistry {
-    pub solutions: BTreeMap<u32, Box<DaySolution>>,
-}
-
-impl DaysRegistry {
-    pub fn new() -> Self {
-        Self {
-            solutions: BTreeMap::new(),
+macro_rules! register_days {
+    ($($day:literal),*) => {
+        paste! {
+            lazy_static! {
+                pub static ref DAY_SOLUTIONS: BTreeMap<u32, DaySolution> = {
+                    let mut map = BTreeMap::new();
+                    $(
+                        map.insert($day, DaySolution::new([<day_ $day>]::part_1, [<day_ $day>]::part_2));
+                    )*
+                    map
+                };
+            }
         }
-    }
-
-    pub fn register_solution(&mut self, day: u32, solution: DaySolution) {
-        self.solutions.insert(day, Box::new(solution));
-    }
-
-    pub fn get(&self, day: u32) -> Option<DaySolution> {
-        self.solutions.get(&day).map(|d| d.deref()).copied()
     }
 }
 
 macro_rules! export_days {
-    ($($day:ident),*) => {
-        $(
-            pub mod $day;
-        )*
+    () => {
+        include!(concat!(env!("OUT_DIR"), "/exported_days.rs"));
     };
 }
 
-export_days!(day_01, day_02);
-
-#[macro_export]
-macro_rules! register_days {
-    ($($day:ident),*) => (
-        {
-            use crate::days::{DaySolution, DaysRegistry};
-            let mut registry = DaysRegistry::new();
-            $(
-                use crate::days::$day;
-                let day_num = stringify!($day)
-                    .chars()
-                    .filter_map(|c| c.to_digit(10))
-                    .fold(0, |acc, digit| acc * 10 + digit);
-                let day_solution = DaySolution::new($day::part_1, $day::part_2);
-                registry.register_solution(day_num, day_solution);
-            )*
-            registry
-        }
-    )
-}
+export_days!();

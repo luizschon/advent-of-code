@@ -1,6 +1,8 @@
 use clap::Parser;
 use std::fs;
 
+use crate::days::DAY_SOLUTIONS;
+
 pub mod days;
 
 #[derive(Debug, Parser)]
@@ -11,11 +13,10 @@ struct Cli {
 }
 
 fn main() {
-    let registry = register_days!(day_01, day_02);
     let cli = Cli::parse();
 
     if let Some(day) = cli.day {
-        if let Some(solution) = registry.get(day) {
+        if let Some(solution) = DAY_SOLUTIONS.get(&day) {
             let input = fs::read_to_string(format!("input/day_{:02}", day)).unwrap();
             solution.run_parts(&input, day);
         } else {
@@ -23,7 +24,8 @@ fn main() {
         }
     } else {
         let mut first_run = true;
-        for (&day, solution) in registry.solutions.iter() {
+
+        for (&day, solution) in DAY_SOLUTIONS.iter() {
             if !first_run {
                 print!("\n");
             }
