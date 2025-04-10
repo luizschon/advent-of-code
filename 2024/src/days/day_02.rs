@@ -26,7 +26,7 @@ fn is_safe_damped(report: &[u64]) -> bool {
 }
 
 pub fn part_1(input: &str) -> Box<dyn Display> {
-    let reports = dbg!(parse(input));
+    let reports = parse(input);
 
     Box::new(
         reports
@@ -37,7 +37,7 @@ pub fn part_1(input: &str) -> Box<dyn Display> {
 }
 
 pub fn part_2(input: &str) -> Box<dyn Display> {
-    let reports = dbg!(parse(input));
+    let reports = parse(input);
 
     Box::new(
         reports
