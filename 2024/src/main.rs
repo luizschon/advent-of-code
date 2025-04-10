@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::{fs, path::Path};
+use std::fs;
 
 use crate::days::DAY_SOLUTIONS;
 use colored::Colorize;
@@ -28,27 +28,38 @@ fn read_day_input(path: &str, day: u32) -> Option<String> {
 fn main() {
     let cli = Cli::parse();
 
-    if let Some(day) = cli.day {
-        if let Some(solution) = DAY_SOLUTIONS.get(&day) {
-            let Some(input) = read_day_input(&format!("input/day_{:02}", day), day) else {
-                return;
-            };
-            solution.run_parts(&input, day);
-        } else {
-            eprintln!("Day {} not registered", day);
-        }
-    } else {
-        let mut first_run = true;
-
-        for (&day, solution) in DAY_SOLUTIONS.iter() {
-            if !first_run {
-                print!("\n");
+    match cli.day {
+        Some(day) => {
+            if let Some(solution) = DAY_SOLUTIONS.get(&day) {
+                let Some(input) = read_day_input(&format!("input/day_{:02}", day), day) else {
+                    return;
+                };
+                solution.run_parts(&input, day);
+            } else {
+                eprintln!(
+                    "{}",
+                    format!(
+                        "Day {} not registered. Add a {} file to register it.",
+                        day,
+                        format!("src/days/day_{:02}.rs", day).yellow()
+                    )
+                    .red()
+                );
             }
-            let Some(input) = read_day_input(&format!("input/day_{:02}", day), day) else {
-                continue;
-            };
-            solution.run_parts(&input, day);
-            first_run = false;
+        }
+        None => {
+            let mut first_run = true;
+
+            for (&day, solution) in DAY_SOLUTIONS.iter() {
+                if !first_run {
+                    println!();
+                }
+                let Some(input) = read_day_input(&format!("input/day_{:02}", day), day) else {
+                    continue;
+                };
+                solution.run_parts(&input, day);
+                first_run = false;
+            }
         }
     }
 }
