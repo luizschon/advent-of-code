@@ -26,25 +26,22 @@ impl DaySolution {
             format!("{} {:02} {}", "Running day".blue(), day, "solution:".blue()).italic()
         );
 
-        let time = Instant::now();
-        println!(
-            "{} {} {}. {} {:?}",
-            " ├─".cyan(),
-            "Answer:".green(),
-            (self.part_1)(input),
-            "Elapsed time:".yellow(),
-            time.elapsed()
-        );
+        macro_rules! print_result {
+            ($res:expr, $c:expr) => {
+                let time = Instant::now();
+                println!(
+                    "{} {} {}. {} {:?}",
+                    &format!(" {}", $c).cyan(),
+                    "Answer:".green(),
+                    $res,
+                    "Elapsed time:".yellow(),
+                    time.elapsed()
+                );
+            };
+        }
 
-        let time = Instant::now();
-        println!(
-            "{} {} {}. {} {:?}",
-            " └─".cyan(),
-            "Answer:".green(),
-            (self.part_2)(input),
-            "Elapsed time:".yellow(),
-            time.elapsed()
-        );
+        print_result!((self.part_1)(input), "├─");
+        print_result!((self.part_2)(input), "└─");
     }
 }
 
