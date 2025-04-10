@@ -56,14 +56,14 @@ mod tests {
     use super::*;
     use indoc::indoc;
 
-    const TEST_INPUT: &str = indoc! {
-    "3   4
-     4   3
-     2   5
-     1   3
-     3   9
-     3   3"
-    };
+    const TEST_INPUT: &str = indoc! { r#"
+        3   4
+        4   3
+        2   5
+        1   3
+        3   9
+        3   3
+    "# };
 
     #[test]
     fn test_part_1() {

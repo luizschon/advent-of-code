@@ -13,7 +13,7 @@ mod tests {
     use super::*;
     use indoc::indoc;
 
-    const TEST_INPUT: &str = indoc! {""};
+    const TEST_INPUT: &str = indoc! { r#""# };
 
     #[test]
     fn test_part_1() {
