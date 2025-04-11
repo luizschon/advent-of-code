@@ -1,17 +1,15 @@
-use std::{fmt::Display, iter, ops::Index};
+use std::{arch::x86_64::_CMP_FALSE_OQ, fmt::Display, ops::Index};
+
+type Point = (usize, usize); // Point = (i, j)
+type Direction = (isize, isize); // Direction = (delta i, delta j)
 
 #[derive(Debug)]
-struct CharTable {
+struct CharGrid {
     data: Vec<char>,
     cols: usize,
 }
 
-impl CharTable {
-    pub fn new(data: Vec<char>, cols: usize) -> Self {
-        assert!(data.len() % cols == 0, "Data len must be divisible by cols");
-        Self { data, cols }
-    }
-
+impl CharGrid {
     #[inline]
     pub fn cols(&self) -> usize {
         self.cols
@@ -23,7 +21,7 @@ impl CharTable {
     }
 }
 
-impl Index<usize> for CharTable {
+impl Index<usize> for CharGrid {
     type Output = [char];
 
     fn index(&self, row: usize) -> &Self::Output {
@@ -33,90 +31,28 @@ impl Index<usize> for CharTable {
     }
 }
 
-fn count_horizontal(table: &CharTable, pos: (usize, usize)) -> u32 {
-    let (i, j) = pos;
-    let mut total = 0;
+fn matches_pattern(grid: &CharGrid, (i, j): Point, (di, dj): Direction, pattern: &str) -> bool {
+    pattern.chars().enumerate().all(|(k, ch)| {
+        let row = i.checked_add_signed(di * k as isize);
+        let col = j.checked_add_signed(dj * k as isize);
 
-    if table.cols() - j >= 4 {
-        total += (&table[i][j..j + 4].iter().collect::<String>() == "XMAS") as u32;
-    }
-    if j >= 3 {
-        total += (&table[i][j - 3..=j].iter().rev().collect::<String>() == "XMAS") as u32;
-    }
-    total
-}
-
-fn count_vertical(table: &CharTable, pos: (usize, usize)) -> u32 {
-    let (i, j) = pos;
-    let mut total = 0;
-
-    if table.rows() - i >= 4 {
-        total += ((i..i + 4).map(|idx| table[idx][j]).collect::<String>() == "XMAS") as u32;
-    }
-    if i >= 3 {
-        total += ((i - 3..=i)
-            .map(|idx| table[idx][j])
-            .rev()
-            .collect::<String>()
-            == "XMAS") as u32;
-    }
-    total
-}
-
-fn count_diagonal(table: &CharTable, pos: (usize, usize)) -> u32 {
-    let (i, j) = pos;
-    let mut total = 0;
-
-    if table.rows() - i >= 4 {
-        if table.cols() - j >= 4 {
-            total += ((0..4).map(|c| table[i + c][j + c]).collect::<String>() == "XMAS") as u32;
-        }
-        if j >= 3 {
-            total += ((0..4).map(|c| table[i + c][j - c]).collect::<String>() == "XMAS") as u32;
-        }
-    }
-    if i >= 3 {
-        if table.cols() - j >= 4 {
-            total += ((0..4).map(|c| table[i - c][j + c]).collect::<String>() == "XMAS") as u32;
-        }
-        if j >= 3 {
-            total += ((0..4).map(|c| table[i - c][j - c]).collect::<String>() == "XMAS") as u32;
-        }
-    }
-    total
+        matches!((row, col), (Some(r), Some(c)) if r < grid.rows() && c < grid.cols() && grid[r][c] == ch)
+    })
 }
 
 pub fn part_1(input: &str) -> Box<dyn Display> {
-    let strings = parse(input);
-
-    let pos: Vec<(usize, usize)> = strings
-        .iter()
-        .enumerate()
-        .map(|(i, s)| {
-            iter::zip(
-                iter::repeat(i),
-                s.char_indices().filter(|(_, c)| *c == 'X').map(|(j, _)| j),
-            )
-            .collect::<Vec<_>>()
-        })
-        .flatten()
-        .collect();
-
-    let table = CharTable::new(
-        strings
-            .iter()
-            .map(|s| s.chars().collect::<Vec<_>>())
-            .flatten()
-            .collect(),
-        strings[0].len(),
-    );
+    let grid = parse(input);
+    #[rustfmt::skip]
+    let directions = [
+        (-1, -1), (-1,  0), (-1,  1),
+        ( 0, -1),           ( 0,  1),
+        ( 1, -1), ( 1,  0), ( 1,  1),
+    ];
 
     Box::new(
-        pos.iter()
-            .map(|&p| {
-                count_horizontal(&table, p) + count_vertical(&table, p) + count_diagonal(&table, p)
-            })
-            .sum::<u32>(),
+        itertools::iproduct!(0..grid.rows(), 0..grid.cols(), directions)
+            .filter(|&(i, j, d)| grid[i][j] == 'X' && matches_pattern(&grid, (i, j), d, "XMAS"))
+            .count(),
     )
 }
 
@@ -124,12 +60,20 @@ pub fn part_2(_input: &str) -> Box<dyn Display> {
     Box::new(0)
 }
 
-fn parse(input: &str) -> Vec<&str> {
-    input
+fn parse(input: &str) -> CharGrid {
+    let mut cols = 0;
+    let data = input
         .lines()
-        .map(str::trim)
         .filter(|l| !l.is_empty())
-        .collect()
+        .map(|l| {
+            let data = l.trim().chars().collect::<Vec<_>>();
+            cols = data.len();
+            data
+        })
+        .flatten()
+        .collect();
+
+    CharGrid { data, cols }
 }
 
 #[cfg(test)]
