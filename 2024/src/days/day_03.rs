@@ -3,30 +3,59 @@ use std::{fmt::Display, str::FromStr};
 #[derive(Debug)]
 struct MulOperation(i64, i64);
 
-#[derive(Debug)]
-struct ParseMulOperandsError;
-
 impl MulOperation {
     pub fn run(&self) -> i64 {
         self.0.checked_mul(self.1).unwrap()
     }
 }
 
+#[derive(Debug)]
+struct ParseMulOperationError;
+
 impl FromStr for MulOperation {
-    type Err = ParseMulOperandsError;
+    type Err = ParseMulOperationError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (a, b) = s
             .strip_prefix("mul(")
             .and_then(|s| s.strip_suffix(")"))
             .and_then(|s| s.split_once(","))
-            .ok_or(ParseMulOperandsError)?;
+            .ok_or(ParseMulOperationError)?;
 
-        let a = a.parse::<i64>().map_err(|_| ParseMulOperandsError)?;
-        let b = b.parse::<i64>().map_err(|_| ParseMulOperandsError)?;
-
+        let a = a.parse::<i64>().map_err(|_| ParseMulOperationError)?;
+        let b = b.parse::<i64>().map_err(|_| ParseMulOperationError)?;
         Ok(Self(a, b))
     }
+}
+
+#[derive(Debug)]
+enum Operation {
+    Mul(MulOperation),
+    Do,
+    Dont,
+}
+
+#[derive(Debug)]
+struct ParseOperationError;
+
+impl FromStr for Operation {
+    type Err = ParseOperationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use Operation::*;
+
+        Ok(match s {
+            "do()" => Do,
+            "don't()" => Dont,
+            s => Mul(s.parse().map_err(|_| ParseOperationError)?),
+        })
+    }
+}
+
+fn find_closest(s: &str, pats: &[&str]) -> Option<usize> {
+    pats.iter()
+        .filter_map(|p| s.find(p))
+        .fold(None, |acc, i| Some(acc.unwrap_or(usize::MAX).min(i)))
 }
 
 pub fn part_1(input: &str) -> Box<dyn Display> {
@@ -49,8 +78,33 @@ pub fn part_1(input: &str) -> Box<dyn Display> {
     Box::new(sum)
 }
 
-pub fn part_2(_input: &str) -> Box<dyn Display> {
-    Box::new(0)
+pub fn part_2(input: &str) -> Box<dyn Display> {
+    let mut input = input;
+    let mut sum = 0;
+    let mut enable = true;
+
+    while let Some(start) = find_closest(input, &["mul", "do", "don't"]) {
+        if let Some(end) = input[start..].find(')') {
+            let end = end + start;
+
+            use Operation::*;
+            match &input[start..=end].parse::<Operation>().ok() {
+                Some(Do) => enable = true,
+                Some(Dont) => enable = false,
+                Some(Mul(m)) => {
+                    if enable {
+                        sum += m.run()
+                    }
+                }
+                _ => (),
+            }
+
+            input = &input[start + 3..];
+        } else {
+            break;
+        }
+    }
+    Box::new(sum)
 }
 
 #[cfg(test)]
