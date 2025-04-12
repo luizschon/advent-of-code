@@ -1,4 +1,4 @@
-use std::{arch::x86_64::_CMP_FALSE_OQ, fmt::Display, ops::Index};
+use std::{fmt::Display, ops::Index};
 
 type Point = (usize, usize); // Point = (i, j)
 type Direction = (isize, isize); // Direction = (delta i, delta j)
@@ -32,7 +32,7 @@ impl Index<usize> for CharGrid {
 }
 
 fn matches_pattern(grid: &CharGrid, (i, j): Point, (di, dj): Direction, pattern: &str) -> bool {
-    pattern.chars().enumerate().all(|(k, ch)| {
+    pattern.char_indices().all(|(k, ch)| {
         let row = i.checked_add_signed(di * k as isize);
         let col = j.checked_add_signed(dj * k as isize);
 
@@ -56,8 +56,20 @@ pub fn part_1(input: &str) -> Box<dyn Display> {
     )
 }
 
-pub fn part_2(_input: &str) -> Box<dyn Display> {
-    Box::new(0)
+pub fn part_2(input: &str) -> Box<dyn Display> {
+    let grid = parse(input);
+    let cross_directions = ((1, 1), (1, -1));
+    let patterns = ["MAS", "SAM"];
+
+    Box::new(
+        itertools::iproduct!(1..grid.rows() - 1, 1..grid.cols() - 1, patterns, patterns)
+            .filter(|&(i, j, p1, p2)| {
+                grid[i][j] == 'A'
+                    && matches_pattern(&grid, (i - 1, j - 1), cross_directions.0, p1)
+                    && matches_pattern(&grid, (i - 1, j + 1), cross_directions.1, p2)
+            })
+            .count(),
+    )
 }
 
 fn parse(input: &str) -> CharGrid {
@@ -103,6 +115,6 @@ mod tests {
     #[test]
     fn test_part_2() {
         let res = part_2(TEST_INPUT);
-        assert_eq!(&res.to_string(), "-1");
+        assert_eq!(&res.to_string(), "9");
     }
 }
