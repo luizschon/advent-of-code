@@ -1,11 +1,60 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
-pub fn part_1(_input: &str) -> Box<dyn Display> {
-    Box::new(0)
+type OrderingRules = HashMap<u32, Vec<u32>>;
+type Updates = Vec<Vec<u32>>;
+
+fn is_ordered(ordering: &OrderingRules, update: &Vec<u32>) -> bool {
+    let idx_map: HashMap<_, _> = update.iter().enumerate().map(|(i, v)| (*v, i)).collect();
+
+    idx_map.iter().all(|(page, p_idx)| {
+        ordering.get(page).is_none_or(|rules| {
+            rules
+                .iter()
+                .all(|p| idx_map.get(p).is_none_or(|r_idx| r_idx > p_idx))
+        })
+    })
+}
+
+pub fn part_1(input: &str) -> Box<dyn Display> {
+    let (ordering, updates) = parse(input);
+    Box::new(
+        updates
+            .iter()
+            .filter_map(|u| is_ordered(&ordering, u).then(|| u[u.len() / 2]))
+            .sum::<u32>(),
+    )
 }
 
 pub fn part_2(_input: &str) -> Box<dyn Display> {
     Box::new(0)
+}
+
+fn parse(input: &str) -> (OrderingRules, Updates) {
+    let mut blocks = input.split("\n\n");
+    let mut ordering = HashMap::<u32, Vec<u32>>::new();
+
+    blocks.next().unwrap().lines().for_each(|l| {
+        let [a, b] = l
+            .split('|')
+            .map(|d| d.parse().unwrap())
+            .collect::<Vec<u32>>()
+            .try_into()
+            .unwrap();
+
+        ordering
+            .entry(a)
+            .and_modify(|v| v.push(b))
+            .or_insert(vec![b]);
+    });
+
+    let updates = blocks
+        .next()
+        .unwrap()
+        .lines()
+        .map(|l| l.split(',').map(|d| d.parse().unwrap()).collect())
+        .collect();
+
+    (ordering, updates)
 }
 
 #[cfg(test)]
