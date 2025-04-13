@@ -15,6 +15,26 @@ fn is_ordered(ordering: &OrderingRules, update: &Vec<u32>) -> bool {
     })
 }
 
+fn ordered_mid_val(ordering: &OrderingRules, update: &mut Vec<u32>) -> u32 {
+    let len = update.len();
+
+    // Notice that to find the middle element in the correctly ordered update
+    // list we only need to fix the ordering up to the middle element.
+    for curr in 0..=len / 2 {
+        for next in curr..len {
+            match ordering.get(&update[next]) {
+                Some(r) => {
+                    if r.contains(&update[curr]) {
+                        update.swap(curr, next);
+                    }
+                }
+                _ => (),
+            }
+        }
+    }
+    update[len / 2]
+}
+
 pub fn part_1(input: &str) -> Box<dyn Display> {
     let (ordering, updates) = parse(input);
     Box::new(
@@ -25,8 +45,15 @@ pub fn part_1(input: &str) -> Box<dyn Display> {
     )
 }
 
-pub fn part_2(_input: &str) -> Box<dyn Display> {
-    Box::new(0)
+pub fn part_2(input: &str) -> Box<dyn Display> {
+    let (ordering, mut updates) = parse(input);
+    Box::new(
+        updates
+            .iter_mut()
+            .filter(|u| !is_ordered(&ordering, u))
+            .map(|u| ordered_mid_val(&ordering, u))
+            .sum::<u32>(),
+    )
 }
 
 fn parse(input: &str) -> (OrderingRules, Updates) {
@@ -102,6 +129,6 @@ mod tests {
     #[test]
     fn test_part_2() {
         let res = part_2(TEST_INPUT);
-        assert_eq!(&res.to_string(), "-1");
+        assert_eq!(&res.to_string(), "123");
     }
 }
