@@ -1,86 +1,96 @@
-use std::{collections::HashSet, fmt::Display, ops::Index};
+use std::{collections::HashSet, fmt::Display};
 
-type Direction = (isize, isize); // (delta_i, delta_j)
+type Map = Vec<Vec<char>>; // 2D char grid
+type Pos = (usize, usize); // (i, j)
 
-struct Map {
-    grid: Vec<char>,
-    cols: usize,
-    guard_pos: usize,
-    guard_dir: Direction,
+struct Direction(isize, isize); // (delta_i, delta_j)
+
+impl Direction {
+    #[inline]
+    pub fn rotate_right(&mut self) {
+        let temp = self.0;
+        self.0 = self.1;
+        self.1 = -1 * temp;
+    }
 }
 
-impl Map {
-    pub fn from(s: &str) -> Self {
-        let mut lines = s.lines().peekable();
-        let cols = lines.peek().unwrap().len();
-        let grid: Vec<char> = lines
-            .map(|l| l.chars().collect::<Vec<_>>())
-            .flatten()
-            .collect();
+impl Default for Direction {
+    fn default() -> Self {
+        Self(-1, 0)
+    }
+}
 
-        let Some(guard_pos) = grid.iter().position(|&c| c == '^') else {
-            panic!("Guard not found!")
+struct Guard {
+    pos: Pos,
+    direction: Direction,
+}
+
+struct GuardPosError;
+
+impl Guard {
+    #[inline]
+    pub fn curr_pos(&self) -> Pos {
+        self.pos
+    }
+
+    pub fn step(&mut self, map: &Map) -> Result<Pos, GuardPosError> {
+        let (rows, cols) = (map.len(), map[0].len());
+        let next_pos = |(i, j): Pos, dir: &Direction| {
+            Ok((
+                i.checked_add_signed(dir.0)
+                    .and_then(|r| (r < rows).then_some(r))
+                    .ok_or(GuardPosError)?,
+                j.checked_add_signed(dir.1)
+                    .and_then(|c| (c < cols).then_some(c))
+                    .ok_or(GuardPosError)?,
+            ))
         };
 
+        let next = next_pos(self.pos, &self.direction)?;
+
+        if map[next.0][next.1] == '#' {
+            self.direction.rotate_right();
+        }
+        self.pos = next_pos(self.pos, &self.direction)?;
+        Ok(self.pos)
+    }
+}
+
+impl From<&Map> for Guard {
+    fn from(map: &Map) -> Self {
+        let mut pos = (0, 0);
+        for (i, row) in map.iter().enumerate() {
+            if let Some(j) = row.iter().position(|&c| c == '^') {
+                pos = (i, j);
+                break;
+            }
+        }
         Self {
-            grid,
-            cols,
-            guard_pos,
-            guard_dir: (-1, 0),
+            pos,
+            direction: Direction::default(),
         }
     }
-
-    #[inline]
-    pub fn rows(&self) -> usize {
-        self.grid.len() / self.cols
-    }
-}
-
-impl Index<usize> for Map {
-    type Output = [char];
-
-    fn index(&self, row: usize) -> &Self::Output {
-        let start = row * self.cols;
-        let end = start + self.cols;
-        &self.grid[start..end]
-    }
-}
-
-fn simulate_guard(map: &mut Map) -> usize {
-    let (rows, cols) = (map.rows(), map.cols);
-    let (mut gi, mut gj, mut gdir) = (
-        (map.guard_pos / cols) as isize,
-        (map.guard_pos % cols) as isize,
-        map.guard_dir,
-    );
-
-    let is_inbounds =
-        |i: isize, j: isize| i >= 0 && i < rows as isize && j >= 0 && j < cols as isize;
-
-    // Save the guard's visited positions in a hashset to deny repeats
-    let mut visited = HashSet::<(isize, isize)>::new();
-
-    while is_inbounds(gi, gj) {
-        if map[gi as usize][gj as usize] == '#' {
-            gi -= gdir.0;
-            gj -= gdir.1;
-            // 90 deg rotation of a 2D vector.
-            gdir = (gdir.1, -1 * gdir.0);
-            continue;
-        }
-        visited.insert((gi, gj));
-        gi += gdir.0;
-        gj += gdir.1;
-    }
-    visited.len()
 }
 
 pub fn part_1(input: &str) -> Box<dyn Display> {
-    Box::new(simulate_guard(&mut Map::from(input)))
+    let (map, mut guard) = parse(input);
+    let mut visited_pos = HashSet::<Pos>::new();
+    visited_pos.insert(guard.curr_pos());
+
+    while let Ok(pos) = guard.step(&map) {
+        visited_pos.insert(pos);
+    }
+    Box::new(visited_pos.len())
 }
 
 pub fn part_2(_input: &str) -> Box<dyn Display> {
     Box::new(0)
+}
+
+fn parse(input: &str) -> (Map, Guard) {
+    let map = input.lines().map(|s| s.chars().collect()).collect();
+    let guard = Guard::from(&map);
+    (map, guard)
 }
 
 #[cfg(test)]
@@ -110,6 +120,6 @@ mod tests {
     #[test]
     fn test_part_2() {
         let res = part_2(TEST_INPUT);
-        assert_eq!(&res.to_string(), "-1");
+        assert_eq!(&res.to_string(), "6");
     }
 }
